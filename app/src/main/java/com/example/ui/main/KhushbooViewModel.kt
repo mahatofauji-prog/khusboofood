@@ -301,8 +301,7 @@ class KhushbooViewModel(application: Application) : AndroidViewModel(application
 
         storeList.map { store ->
             val distance = LocationHelper.calculateDistanceKm(userLat, userLng, store.latitude, store.longitude)
-            val isWithinRadius = distance <= store.deliveryRadius
-            val isAvailable = isWithinRadius && store.isOpen && store.isActive
+            val isAvailable = store.isOpen && store.isActive
             val estMins = LocationHelper.estimateDeliveryMinutes(distance)
             val fee = LocationHelper.calculateDeliveryFee(distance, 0.0)
 
@@ -313,19 +312,15 @@ class KhushbooViewModel(application: Application) : AndroidViewModel(application
                 estimatedMinutes = estMins,
                 deliveryFee = fee
             )
-        }.sortedWith(compareByDescending<StoreWithDistance> { it.isAvailable }.thenBy { it.distanceKm })
+        }.sortedBy { it.distanceKm }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     /**
-     * Live availability check for products based on their parent store's delivery radius
+     * Live availability check for products
      */
     fun isProductAvailableAtLocation(product: ProductEntity): Boolean {
-        val userLat = profile.value?.selectedLatitude ?: LocationHelper.DEFAULT_LAT
-        val userLng = profile.value?.selectedLongitude ?: LocationHelper.DEFAULT_LNG
-        val store = businesses.value.find { it.id == product.vendorId } ?: return false
-
-        val distance = LocationHelper.calculateDistanceKm(userLat, userLng, store.latitude, store.longitude)
-        return distance <= store.deliveryRadius && store.isOpen && store.isActive && product.isAvailable && product.isEnabled
+        val store = businesses.value.find { it.id == product.vendorId } ?: return product.isAvailable && product.isEnabled
+        return store.isOpen && store.isActive && product.isAvailable && product.isEnabled
     }
 
     fun getStoreForProduct(product: ProductEntity): BusinessEntity? {
@@ -451,20 +446,10 @@ class KhushbooViewModel(application: Application) : AndroidViewModel(application
         if (!store.isActive) {
             return CartValidationResult(false, "${store.name} is currently suspended or inactive.")
         }
-        if (!store.isOpen) {
-            return CartValidationResult(false, "${store.name} is currently closed. Opening time: ${store.openingTime}.")
-        }
 
         val distance = LocationHelper.calculateDistanceKm(
             p.selectedLatitude, p.selectedLongitude, store.latitude, store.longitude
         )
-
-        if (distance > store.deliveryRadius) {
-            return CartValidationResult(
-                false,
-                "${store.name} delivers within ${store.deliveryRadius.toInt()} km. Your location is ${LocationHelper.formatDistance(distance)} away."
-            )
-        }
 
         val itemTotal = items.sumOf { it.price * it.quantity }
         val fee = LocationHelper.calculateDeliveryFee(distance, itemTotal)

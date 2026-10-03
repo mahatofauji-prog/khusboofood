@@ -650,7 +650,7 @@ fun StoreCard(item: StoreWithDistance, onClick: () -> Unit) {
             .clickable { onClick() },
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = CARD_BACKGROUND),
-        border = BorderStroke(1.dp, if (item.isAvailable) BORDER_GOLD else BORDER)
+        border = BorderStroke(1.dp, BORDER_GOLD)
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
             Row(
@@ -659,15 +659,15 @@ fun StoreCard(item: StoreWithDistance, onClick: () -> Unit) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Surface(
-                    color = if (item.isAvailable) Color(0xFF142416) else Color(0xFF261818),
+                    color = Color(0xFF142416),
                     shape = RoundedCornerShape(6.dp),
-                    border = BorderStroke(1.dp, if (item.isAvailable) SUCCESS_GREEN else ERROR_RED)
+                    border = BorderStroke(1.dp, SUCCESS_GREEN)
                 ) {
                     Text(
-                        text = if (item.isAvailable) "DELIVERING NOW" else "UNAVAILABLE",
+                        text = "DELIVERING NOW",
                         fontSize = 9.sp,
                         fontWeight = FontWeight.Bold,
-                        color = if (item.isAvailable) SUCCESS_GREEN else ERROR_RED,
+                        color = SUCCESS_GREEN,
                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                     )
                 }
@@ -742,37 +742,15 @@ fun ProductCard(
         border = BorderStroke(1.dp, BORDER)
     ) {
         Column(modifier = Modifier.padding(10.dp)) {
-            Box(modifier = Modifier.fillMaxWidth()) {
-                Image(
-                    painter = painterResource(id = getProductImageRes(product.name)),
-                    contentDescription = product.name,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(100.dp)
-                        .clip(RoundedCornerShape(8.dp)),
-                    contentScale = ContentScale.Crop
-                )
-
-                if (!isAvailable) {
-                    Surface(
-                        color = Color(0xCC0B0B0B),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(100.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Text(
-                                "Outside Delivery Area",
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = ERROR_RED,
-                                textAlign = TextAlign.Center
-                            )
-                        }
-                    }
-                }
-            }
+            Image(
+                painter = painterResource(id = getProductImageRes(product.name)),
+                contentDescription = product.name,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(100.dp)
+                    .clip(RoundedCornerShape(8.dp)),
+                contentScale = ContentScale.Crop
+            )
 
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -812,32 +790,16 @@ fun ProductCard(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            if (isAvailable) {
-                Button(
-                    onClick = onAddToCart,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(32.dp),
-                    contentPadding = PaddingValues(0.dp),
-                    shape = RoundedCornerShape(6.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = PRIMARY_GOLD, contentColor = DarkText)
-                ) {
-                    Text("Add to Cart", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = DarkText)
-                }
-            } else {
-                OutlinedButton(
-                    onClick = { /* Disabled */ },
-                    enabled = false,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(32.dp),
-                    contentPadding = PaddingValues(0.dp),
-                    shape = RoundedCornerShape(6.dp),
-                    border = BorderStroke(1.dp, BORDER),
-                    colors = ButtonDefaults.outlinedButtonColors(disabledContentColor = TEXT_MUTED)
-                ) {
-                    Text("Unavailable", fontSize = 11.sp)
-                }
+            Button(
+                onClick = onAddToCart,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(32.dp),
+                contentPadding = PaddingValues(0.dp),
+                shape = RoundedCornerShape(6.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = PRIMARY_GOLD, contentColor = DarkText)
+            ) {
+                Text("Add to Cart", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = DarkText)
             }
         }
     }
@@ -1061,14 +1023,15 @@ fun CustomerProductDetailScreen(viewModel: KhushbooViewModel, product: ProductEn
                     Text(store?.address ?: "Main Market Road, Purulia", fontSize = 11.sp, color = TEXT_SECONDARY)
                 }
                 Surface(
-                    color = if (isAvailable) Color(0xFF142416) else Color(0xFF261818),
-                    shape = RoundedCornerShape(6.dp)
+                    color = Color(0xFF142416),
+                    shape = RoundedCornerShape(6.dp),
+                    border = BorderStroke(1.dp, SUCCESS_GREEN)
                 ) {
                     Text(
-                        if (isAvailable) "Within Delivery Range (${LocationHelper.formatDistance(distanceKm)})" else "Outside Range",
+                        "Delivery Range • ${LocationHelper.formatDistance(distanceKm)}",
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
-                        color = if (isAvailable) SUCCESS_GREEN else ERROR_RED,
+                        color = SUCCESS_GREEN,
                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp)
                     )
                 }
@@ -1115,41 +1078,28 @@ fun CustomerProductDetailScreen(viewModel: KhushbooViewModel, product: ProductEn
         }
 
         Spacer(modifier = Modifier.height(24.dp))
-        if (isAvailable) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Button(
-                    onClick = { viewModel.addToCart(product, selectedVariant, currentPrice) },
-                    modifier = Modifier.weight(1f).height(48.dp),
-                    shape = RoundedCornerShape(10.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = CARD_BACKGROUND, contentColor = BRIGHT_GOLD),
-                    border = BorderStroke(1.dp, BRIGHT_GOLD)
-                ) {
-                    Icon(Icons.Default.ShoppingCart, contentDescription = null, tint = BRIGHT_GOLD)
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text("Add to Cart", fontWeight = FontWeight.Bold)
-                }
-                Button(
-                    onClick = {
-                        viewModel.addToCart(product, selectedVariant, currentPrice)
-                        viewModel.navigateCustomerTo(CustomerScreen.CART)
-                    },
-                    modifier = Modifier.weight(1f).height(48.dp),
-                    shape = RoundedCornerShape(10.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = PRIMARY_GOLD, contentColor = DarkText)
-                ) {
-                    Text("Buy Now", fontWeight = FontWeight.Bold, color = DarkText)
-                }
-            }
-        } else {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF261818)),
-                border = BorderStroke(1.dp, ERROR_RED)
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Button(
+                onClick = { viewModel.addToCart(product, selectedVariant, currentPrice) },
+                modifier = Modifier.weight(1f).height(48.dp),
+                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = CARD_BACKGROUND, contentColor = BRIGHT_GOLD),
+                border = BorderStroke(1.dp, BRIGHT_GOLD)
             ) {
-                Column(modifier = Modifier.padding(14.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("Unavailable for Delivery at Selected Address", fontWeight = FontWeight.Bold, color = ERROR_RED, fontSize = 13.sp)
-                    Text("Please change your delivery location to a closer area to order from this store.", fontSize = 11.sp, color = TEXT_SECONDARY, textAlign = TextAlign.Center)
-                }
+                Icon(Icons.Default.ShoppingCart, contentDescription = null, tint = BRIGHT_GOLD)
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("Add to Cart", fontWeight = FontWeight.Bold)
+            }
+            Button(
+                onClick = {
+                    viewModel.addToCart(product, selectedVariant, currentPrice)
+                    viewModel.navigateCustomerTo(CustomerScreen.CART)
+                },
+                modifier = Modifier.weight(1f).height(48.dp),
+                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = PRIMARY_GOLD, contentColor = DarkText)
+            ) {
+                Text("Buy Now", fontWeight = FontWeight.Bold, color = DarkText)
             }
         }
     }
