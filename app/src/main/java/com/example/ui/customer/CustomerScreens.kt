@@ -399,55 +399,9 @@ fun CustomerHomeScreen(viewModel: KhushbooViewModel, products: List<ProductEntit
             }
         }
 
-        // Explore Nearby Stores Section
-        item {
-            Column(modifier = Modifier.padding(vertical = 6.dp)) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 4.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text(
-                            text = "Stores Delivering To You",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = TEXT_PRIMARY
-                        )
-                        Text(
-                            text = "Nearby verified kitchens & sweet shops",
-                            fontSize = 11.sp,
-                            color = TEXT_SECONDARY
-                        )
-                    }
-                    Text(
-                        text = "${storesWithDistance.count { it.isAvailable }} Active",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = BRIGHT_GOLD
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                LazyRow(
-                    contentPadding = PaddingValues(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(storesWithDistance) { item ->
-                        StoreCard(item = item, onClick = {
-                            viewModel.selectCategory("All")
-                        })
-                    }
-                }
-            }
-        }
-
         // Category Chips
         item {
-            Column(modifier = Modifier.padding(vertical = 12.dp)) {
+            Column(modifier = Modifier.padding(vertical = 8.dp)) {
                 Text(
                     text = "Explore Categories",
                     style = MaterialTheme.typography.titleMedium,
@@ -565,7 +519,7 @@ fun CustomerHomeScreen(viewModel: KhushbooViewModel, products: List<ProductEntit
             }
         }
 
-        // Trust Features
+        // Trust Features (Why Khushboo Food?)
         item {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text("Why Khushboo Food?", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = TEXT_PRIMARY)
@@ -574,6 +528,52 @@ fun CustomerHomeScreen(viewModel: KhushbooViewModel, products: List<ProductEntit
                     FeatureBadge(icon = Icons.Default.Eco, title = "100% Fresh", desc = "Prepared daily")
                     FeatureBadge(icon = Icons.Default.Verified, title = "Pure Ghee", desc = "Top quality")
                     FeatureBadge(icon = Icons.Default.FlashOn, title = "Fast Delivery", desc = "20-30 mins")
+                }
+            }
+        }
+
+        // Explore Nearby Stores Section (Placed directly below Why Khushboo Food?)
+        item {
+            Column(modifier = Modifier.padding(vertical = 8.dp)) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "Stores Delivering To You",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = TEXT_PRIMARY
+                        )
+                        Text(
+                            text = "Nearby verified kitchens & sweet shops",
+                            fontSize = 11.sp,
+                            color = TEXT_SECONDARY
+                        )
+                    }
+                    Text(
+                        text = "${storesWithDistance.count { it.isAvailable }} Active",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = BRIGHT_GOLD
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                LazyRow(
+                    contentPadding = PaddingValues(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(storesWithDistance) { item ->
+                        StoreCard(item = item, onClick = {
+                            viewModel.selectCategory("All")
+                        })
+                    }
                 }
             }
         }
