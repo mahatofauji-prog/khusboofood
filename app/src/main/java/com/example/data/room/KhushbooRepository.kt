@@ -9,6 +9,9 @@ class KhushbooRepository(
     private val orderDao: OrderDao,
     private val profileDao: CustomerProfileDao,
     private val addressDao: AddressDao,
+    private val partnerDao: DeliveryPartnerDao,
+    private val assignmentDao: DeliveryAssignmentDao,
+    private val settingsDao: DeliverySettingsDao,
     private val wishlistDao: WishlistDao,
     private val notificationDao: NotificationDao,
     private val orderStatusHistoryDao: OrderStatusHistoryDao,
@@ -24,6 +27,9 @@ class KhushbooRepository(
     val wishlist: Flow<List<WishlistItemEntity>> = wishlistDao.getWishlistItems()
     val notifications: Flow<List<NotificationEntity>> = notificationDao.getAllNotifications()
     val allCoupons: Flow<List<CouponEntity>> = couponDao.getAllCoupons()
+    val allPartners: Flow<List<DeliveryPartnerEntity>> = partnerDao.getAllPartners()
+    val availablePartners: Flow<List<DeliveryPartnerEntity>> = partnerDao.getAvailablePartners()
+    val deliverySettings: Flow<DeliverySettingsEntity?> = settingsDao.getSettings()
 
     fun getVendorProducts(vendorId: Long): Flow<List<ProductEntity>> = productDao.getProductsByVendor(vendorId)
     fun getVendorOrders(vendorId: Long): Flow<List<OrderEntity>> = orderDao.getOrdersByVendor(vendorId)
@@ -37,10 +43,22 @@ class KhushbooRepository(
     suspend fun registerBusiness(business: BusinessEntity): Long = businessDao.insertBusiness(business)
     suspend fun updateBusiness(business: BusinessEntity) = businessDao.updateBusiness(business)
     suspend fun updateBusinessStatus(businessId: Long, status: String) = businessDao.updateBusinessStatus(businessId, status)
+    suspend fun updateStoreOpenStatus(businessId: Long, isOpen: Boolean) = businessDao.updateStoreOpenStatus(businessId, isOpen)
 
     suspend fun updateProfile(profile: CustomerProfileEntity) = profileDao.insertOrUpdateProfile(profile)
-    suspend fun addAddress(address: AddressEntity) = addressDao.insertAddress(address)
+    suspend fun markOnboardingComplete() = profileDao.markOnboardingComplete()
+    suspend fun updateSelectedLocation(
+        lat: Double, lng: Double, addr: String, locality: String, city: String, state: String, pincode: String
+    ) = profileDao.updateSelectedLocation(lat, lng, addr, locality, city, state, pincode)
+
+    suspend fun addAddress(address: AddressEntity): Long = addressDao.insertAddress(address)
+    suspend fun updateAddress(address: AddressEntity) = addressDao.updateAddress(address)
     suspend fun deleteAddress(id: Long) = addressDao.deleteAddress(id)
+    suspend fun setDefaultAddress(id: Long) {
+        addressDao.clearDefaultFlags()
+        addressDao.setDefaultAddress(id)
+    }
+    suspend fun getAddressById(id: Long): AddressEntity? = addressDao.getAddressById(id)
 
     fun isWishlisted(productId: Long): Flow<Boolean> = wishlistDao.isInWishlist(productId)
     suspend fun toggleWishlist(productId: Long, isWishlisted: Boolean) {
@@ -62,14 +80,14 @@ class KhushbooRepository(
             OrderStatusHistoryEntity(
                 orderId = orderId,
                 previousStatus = "",
-                newStatus = "ORDER_PLACED",
+                newStatus = order.status,
                 changedBy = "Customer"
             )
         )
         notificationDao.insertNotification(
             NotificationEntity(
-                title = "Order Placed #${orderId}",
-                message = "Your order of ₹${order.totalAmount} has been placed successfully."
+                title = "Order #${orderId} Placed",
+                message = "Your order from ${order.storeName} of ₹${order.totalAmount} has been placed successfully."
             )
         )
         return orderId
@@ -91,6 +109,35 @@ class KhushbooRepository(
             NotificationEntity(
                 title = "Order #${orderId} Updated",
                 message = "Status changed to ${newStatus.replace("_", " ")} by $changedBy."
+            )
+        )
+    }
+
+    suspend fun assignDeliveryPartner(
+        orderId: Long, partnerId: Long, partnerName: String, partnerPhone: String, mode: String
+    ) {
+        orderDao.assignDeliveryPartner(orderId, partnerId, partnerName, partnerPhone, "DELIVERY_ASSIGNED")
+        assignmentDao.insertAssignment(
+            DeliveryAssignmentEntity(
+                orderId = orderId,
+                partnerId = partnerId,
+                deliveryMode = mode,
+                status = "ASSIGNED"
+            )
+        )
+        partnerDao.updateAvailability(partnerId, false)
+        orderStatusHistoryDao.insertHistory(
+            OrderStatusHistoryEntity(
+                orderId = orderId,
+                previousStatus = "READY_FOR_PICKUP",
+                newStatus = "DELIVERY_ASSIGNED",
+                changedBy = "System Assignment"
+            )
+        )
+        notificationDao.insertNotification(
+            NotificationEntity(
+                title = "Delivery Partner Assigned!",
+                message = "$partnerName ($partnerPhone) has been assigned to deliver order #${orderId}."
             )
         )
     }
