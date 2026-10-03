@@ -25,7 +25,7 @@ import kotlinx.coroutines.launch
         OrderStatusHistoryEntity::class,
         CouponEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 abstract class KhushbooDatabase : RoomDatabase() {
@@ -76,9 +76,7 @@ abstract class KhushbooDatabase : RoomDatabase() {
                 super.onOpen(db)
                 INSTANCE?.let { database ->
                     CoroutineScope(Dispatchers.IO).launch {
-                        if (database.productDao().getProductCount() == 0) {
-                            populateInitialData(database)
-                        }
+                        populateInitialData(database)
                     }
                 }
             }
@@ -261,142 +259,388 @@ abstract class KhushbooDatabase : RoomDatabase() {
                 businessDao.insertBusiness(b)
             }
 
-            // Products across stores
+            // Products across stores - EXACT 18 PRODUCTS CATALOGUE
+            val catalogueProductNames = listOf(
+                "Special Kulhad Lassi",
+                "Fruit Chat",
+                "Gulab Jamun",
+                "Sohan Papdi",
+                "Pista Barfi",
+                "Kaju Katli",
+                "Bundi Laddu",
+                "Besan Laddu",
+                "Milk Cake",
+                "Doda Burfi",
+                "Ilaichi Barfi",
+                "Chum Chum",
+                "Bengali Rasgulla",
+                "Sponge Rasgulla",
+                "Delicious Cake",
+                "Pastry",
+                "Pizza",
+                "Burger"
+            )
+
+            // Remove any legacy products not in the exact 18 catalogue
+            productDao.deleteProductsNotIn(catalogueProductNames)
+
             val initialProducts = listOf(
-                // Store 1: KHUSHBOO FOOD Main Outlet (Purulia)
+                // 1. DRINKS: Special Kulhad Lassi (Price: ₹40, Unit: kg)
                 ProductEntity(
                     vendorId = 1,
                     name = "Special Kulhad Lassi",
-                    category = "Beverages",
-                    price250g = 0.0, price500g = 0.0, price1kg = 0.0, priceStandard = 80.0,
-                    description = "Creamy, rich traditional Punjabi lassi served in an earthen kulhad topped with malai and dry fruits.",
-                    imageUrl = "lassi",
-                    rating = 4.9f, isFeatured = true, isBestSeller = true, isAvailable = true
+                    category = "Drinks",
+                    price = 40.0,
+                    unit = "kg",
+                    price250g = 10.0,
+                    price500g = 20.0,
+                    price1kg = 40.0,
+                    priceStandard = 40.0,
+                    description = "Traditional Indian kulhad filled with thick creamy chilled lassi, garnished with thick malai, crushed pistachios, almonds, and saffron strands.",
+                    imageUrl = "img_prod_kulhad_lassi_1791068738451",
+                    rating = 4.9f,
+                    isFeatured = true,
+                    isBestSeller = true,
+                    isAvailable = true
                 ),
+
+                // 2. CHAAT / SNACKS: Fruit Chat (Price: ₹40, Unit: kg)
                 ProductEntity(
                     vendorId = 1,
                     name = "Fruit Chat",
-                    category = "Fast Food",
-                    price250g = 0.0, price500g = 0.0, price1kg = 0.0, priceStandard = 120.0,
-                    description = "Fresh seasonal fruits tossed with tangy Indian spices, lemon, and rock salt.",
-                    imageUrl = "chat",
-                    rating = 4.7f, isFeatured = false, isBestSeller = true, isAvailable = true
+                    category = "Chaat / Snacks",
+                    price = 40.0,
+                    unit = "kg",
+                    price250g = 10.0,
+                    price500g = 20.0,
+                    price1kg = 40.0,
+                    priceStandard = 40.0,
+                    description = "Colorful fresh fruit chaat in a premium serving bowl, cut pieces of juicy fruits tossed with tangy spices, lemon juice, and rock salt.",
+                    imageUrl = "img_prod_fruit_chat_1791068751675",
+                    rating = 4.7f,
+                    isFeatured = false,
+                    isBestSeller = true,
+                    isAvailable = true
                 ),
+
+                // 3. INDIAN SWEETS: Gulab Jamun (Price: ₹280, Unit: kg)
                 ProductEntity(
                     vendorId = 1,
                     name = "Gulab Jamun",
-                    category = "Sweets",
-                    price250g = 140.0, price500g = 270.0, price1kg = 520.0, priceStandard = 140.0,
-                    description = "Soft, spongy milk-solid dumplings soaked in rose-scented sugar syrup.",
-                    imageUrl = "sweets",
-                    rating = 4.9f, isFeatured = true, isBestSeller = true, isAvailable = true
+                    category = "Indian Sweets",
+                    price = 280.0,
+                    unit = "kg",
+                    price250g = 70.0,
+                    price500g = 140.0,
+                    price1kg = 280.0,
+                    priceStandard = 280.0,
+                    description = "Glossy golden-brown gulab jamuns soaked in sugar syrup, infused with rose water and green cardamom, garnished with silver vark and pistachios.",
+                    imageUrl = "img_prod_gulab_jamun_1791068764302",
+                    rating = 4.9f,
+                    isFeatured = true,
+                    isBestSeller = true,
+                    isAvailable = true
                 ),
+
+                // 4. INDIAN SWEETS: Sohan Papdi (Price: ₹280, Unit: kg)
                 ProductEntity(
                     vendorId = 1,
                     name = "Sohan Papdi",
-                    category = "Sweets",
-                    price250g = 130.0, price500g = 250.0, price1kg = 480.0, priceStandard = 130.0,
-                    description = "Flaky, crisp traditional Indian confection made with gram flour, ghee, and cardamom.",
-                    imageUrl = "sweets",
-                    rating = 4.6f, isFeatured = false, isBestSeller = false, isAvailable = true
+                    category = "Indian Sweets",
+                    price = 280.0,
+                    unit = "kg",
+                    price250g = 70.0,
+                    price500g = 140.0,
+                    price1kg = 280.0,
+                    priceStandard = 280.0,
+                    description = "Flaky layered traditional sohan papdi pieces made from roasted gram flour and pure desi ghee, garnished with almonds and pistachios.",
+                    imageUrl = "img_prod_sohan_papdi_1791068775391",
+                    rating = 4.6f,
+                    isFeatured = false,
+                    isBestSeller = false,
+                    isAvailable = true
                 ),
+
+                // 5. INDIAN SWEETS: Pista Barfi (Price: ₹450, Unit: kg)
                 ProductEntity(
                     vendorId = 1,
                     name = "Pista Barfi",
-                    category = "Barfi",
-                    price250g = 200.0, price500g = 390.0, price1kg = 750.0, priceStandard = 200.0,
-                    description = "Rich khoya barfi infused with crushed pistachios and edible silver foil.",
-                    imageUrl = "kaju",
-                    rating = 4.8f, isFeatured = true, isBestSeller = false, isAvailable = true
+                    category = "Indian Sweets",
+                    price = 450.0,
+                    unit = "kg",
+                    price250g = 112.5,
+                    price500g = 225.0,
+                    price1kg = 450.0,
+                    priceStandard = 450.0,
+                    description = "Premium green pista barfi pieces with rich pistachio garnish, pure mawa fudge, and delicate silver foil.",
+                    imageUrl = "img_prod_pista_barfi_1791068786980",
+                    rating = 4.8f,
+                    isFeatured = true,
+                    isBestSeller = false,
+                    isAvailable = true
                 ),
+
+                // 6. INDIAN SWEETS: Kaju Katli (Price: ₹900, Unit: kg)
                 ProductEntity(
                     vendorId = 1,
                     name = "Kaju Katli",
-                    category = "Barfi",
-                    price250g = 250.0, price500g = 480.0, price1kg = 950.0, priceStandard = 250.0,
-                    description = "Legendary diamond-shaped cashew fudge made with premium cashews and pure ghee.",
-                    imageUrl = "kaju",
-                    rating = 5.0f, isFeatured = true, isBestSeller = true, isAvailable = true
+                    category = "Indian Sweets",
+                    price = 900.0,
+                    unit = "kg",
+                    price250g = 225.0,
+                    price500g = 450.0,
+                    price1kg = 900.0,
+                    priceStandard = 900.0,
+                    description = "Diamond-shaped kaju katli with pure silver leaf and authentic smooth cashew texture, made with top-grade cashews and pure desi ghee.",
+                    imageUrl = "img_prod_kaju_katli_1791068799420",
+                    rating = 5.0f,
+                    isFeatured = true,
+                    isBestSeller = true,
+                    isAvailable = true
                 ),
+
+                // 7. INDIAN SWEETS: Bundi Laddu (Price: ₹180, Unit: kg)
                 ProductEntity(
                     vendorId = 1,
                     name = "Bundi Laddu",
-                    category = "Laddu",
-                    price250g = 120.0, price500g = 230.0, price1kg = 450.0, priceStandard = 120.0,
-                    description = "Sweet golden gram flour pearls fried and bound together with ghee and dry fruits.",
-                    imageUrl = "sweets",
-                    rating = 4.7f, isFeatured = false, isBestSeller = true, isAvailable = true
+                    category = "Indian Sweets",
+                    price = 180.0,
+                    unit = "kg",
+                    price250g = 45.0,
+                    price500g = 90.0,
+                    price1kg = 180.0,
+                    priceStandard = 180.0,
+                    description = "Round golden boondi laddus with visible boondi texture, infused with fragrant green cardamom and melon seeds in desi ghee.",
+                    imageUrl = "img_prod_bundi_laddu_1791068813467",
+                    rating = 4.7f,
+                    isFeatured = false,
+                    isBestSeller = true,
+                    isAvailable = true
                 ),
+
+                // 8. INDIAN SWEETS: Besan Laddu (Price: ₹280, Unit: kg)
                 ProductEntity(
                     vendorId = 1,
                     name = "Besan Laddu",
-                    category = "Laddu",
-                    price250g = 130.0, price500g = 250.0, price1kg = 480.0, priceStandard = 130.0,
-                    description = "Classic roasted gram flour balls rich in ghee, cardamom, and nutty aroma.",
-                    imageUrl = "sweets",
-                    rating = 4.8f, isFeatured = false, isBestSeller = false, isAvailable = true
+                    category = "Indian Sweets",
+                    price = 280.0,
+                    unit = "kg",
+                    price250g = 70.0,
+                    price500g = 140.0,
+                    price1kg = 280.0,
+                    priceStandard = 280.0,
+                    description = "Traditional yellow/golden besan laddus with roasted gram flour texture, rich aroma of pure desi ghee, and crunchy dry fruits.",
+                    imageUrl = "img_prod_besan_laddu_1791068826192",
+                    rating = 4.8f,
+                    isFeatured = false,
+                    isBestSeller = false,
+                    isAvailable = true
                 ),
+
+                // 9. INDIAN SWEETS: Milk Cake (Price: ₹380, Unit: kg)
                 ProductEntity(
                     vendorId = 1,
                     name = "Milk Cake",
-                    category = "Sweets",
-                    price250g = 180.0, price500g = 350.0, price1kg = 680.0, priceStandard = 180.0,
-                    description = "Traditional caramelized milk fudge with a rich, grainy texture and deep flavor.",
-                    imageUrl = "sweets",
-                    rating = 4.9f, isFeatured = true, isBestSeller = true, isAvailable = true
+                    category = "Indian Sweets",
+                    price = 380.0,
+                    unit = "kg",
+                    price250g = 95.0,
+                    price500g = 190.0,
+                    price1kg = 380.0,
+                    priceStandard = 380.0,
+                    description = "Rich Indian milk cake pieces with dense creamy texture, caramelized dark core and sweet velvety flavor.",
+                    imageUrl = "img_prod_milk_cake_1791068837979",
+                    rating = 4.9f,
+                    isFeatured = true,
+                    isBestSeller = true,
+                    isAvailable = true
                 ),
+
+                // 10. INDIAN SWEETS: Doda Burfi (Price: ₹400, Unit: kg)
                 ProductEntity(
                     vendorId = 1,
-                    name = "Delicious Cake & Pastry",
+                    name = "Doda Burfi",
+                    category = "Indian Sweets",
+                    price = 400.0,
+                    unit = "kg",
+                    price250g = 100.0,
+                    price500g = 200.0,
+                    price1kg = 400.0,
+                    priceStandard = 400.0,
+                    description = "Traditional dark golden-brown doda burfi pieces with nuts, sprouted wheat and dense caramelized milk fudge.",
+                    imageUrl = "img_prod_doda_burfi_1791068849177",
+                    rating = 4.8f,
+                    isFeatured = false,
+                    isBestSeller = false,
+                    isAvailable = true
+                ),
+
+                // 11. INDIAN SWEETS: Ilaichi Barfi (Price: ₹460, Unit: kg)
+                ProductEntity(
+                    vendorId = 1,
+                    name = "Ilaichi Barfi",
+                    category = "Indian Sweets",
+                    price = 460.0,
+                    unit = "kg",
+                    price250g = 115.0,
+                    price500g = 230.0,
+                    price1kg = 460.0,
+                    priceStandard = 460.0,
+                    description = "Elegant white/cream cardamom barfi pieces with cardamom garnish, made from pure reduced milk solids and silver vark.",
+                    imageUrl = "img_prod_ilaichi_barfi_1791068860606",
+                    rating = 4.8f,
+                    isFeatured = false,
+                    isBestSeller = false,
+                    isAvailable = true
+                ),
+
+                // 12. INDIAN SWEETS: Chum Chum (Price: ₹340, Unit: kg)
+                ProductEntity(
+                    vendorId = 1,
+                    name = "Chum Chum",
+                    category = "Indian Sweets",
+                    price = 340.0,
+                    unit = "kg",
+                    price250g = 85.0,
+                    price500g = 170.0,
+                    price1kg = 340.0,
+                    priceStandard = 340.0,
+                    description = "Traditional Bengali chum chum sweets with soft elongated shape, delicate mawa stuffing, rolled in fine desiccated coconut.",
+                    imageUrl = "img_prod_chum_chum_1791068873447",
+                    rating = 4.9f,
+                    isFeatured = true,
+                    isBestSeller = true,
+                    isAvailable = true
+                ),
+
+                // 13. INDIAN SWEETS: Bengali Rasgulla (Price: ₹320, Unit: kg)
+                ProductEntity(
+                    vendorId = 1,
+                    name = "Bengali Rasgulla",
+                    category = "Indian Sweets",
+                    price = 320.0,
+                    unit = "kg",
+                    price250g = 80.0,
+                    price500g = 160.0,
+                    price1kg = 320.0,
+                    priceStandard = 320.0,
+                    description = "White Bengali rasgullas soaked in clear sugar syrup, made with fresh chhena cheese for an authentic melt-in-mouth experience.",
+                    imageUrl = "img_prod_bengali_rasgulla_1791068887214",
+                    rating = 4.9f,
+                    isFeatured = true,
+                    isBestSeller = true,
+                    isAvailable = true
+                ),
+
+                // 14. INDIAN SWEETS: Sponge Rasgulla (Price: ₹400, Unit: kg)
+                ProductEntity(
+                    vendorId = 1,
+                    name = "Sponge Rasgulla",
+                    category = "Indian Sweets",
+                    price = 400.0,
+                    unit = "kg",
+                    price250g = 100.0,
+                    price500g = 200.0,
+                    price1kg = 400.0,
+                    priceStandard = 400.0,
+                    description = "Soft spongy rasgullas with a visibly different fluffy texture, airy porous chhena soaked in lightly sweetened cardamom syrup.",
+                    imageUrl = "img_prod_sponge_rasgulla_1791068901167",
+                    rating = 4.9f,
+                    isFeatured = true,
+                    isBestSeller = true,
+                    isAvailable = true
+                ),
+
+                // 15. CAKES & PASTRIES: Delicious Cake (Price: NOT PROVIDED, Unit: NOT PROVIDED)
+                ProductEntity(
+                    vendorId = 1,
+                    name = "Delicious Cake",
                     category = "Cakes & Pastries",
-                    price250g = 0.0, price500g = 0.0, price1kg = 0.0, priceStandard = 350.0,
-                    description = "Freshly baked rich chocolate and fruit pastries made with premium ingredients.",
-                    imageUrl = "cake",
-                    rating = 4.7f, isFeatured = true, isBestSeller = true, isAvailable = true
+                    price = null,
+                    unit = "NOT PROVIDED",
+                    price250g = 0.0,
+                    price500g = 0.0,
+                    price1kg = 0.0,
+                    priceStandard = 0.0,
+                    description = "Premium decorated celebration cake with artisan frosting. Price not provided - contact store or await pricing update.",
+                    imageUrl = "img_prod_delicious_cake_1791068914099",
+                    rating = 4.8f,
+                    isFeatured = true,
+                    isBestSeller = true,
+                    isAvailable = true
                 ),
+
+                // 16. CAKES & PASTRIES: Pastry (Price: NOT PROVIDED, Unit: NOT PROVIDED)
                 ProductEntity(
                     vendorId = 1,
-                    name = "Pizza & Burger",
+                    name = "Pastry",
+                    category = "Cakes & Pastries",
+                    price = null,
+                    unit = "NOT PROVIDED",
+                    price250g = 0.0,
+                    price500g = 0.0,
+                    price1kg = 0.0,
+                    priceStandard = 0.0,
+                    description = "Premium single-serving pastry with delicate layers and rich glaze. Price not provided - contact store or await pricing update.",
+                    imageUrl = "img_prod_pastry_1791068925551",
+                    rating = 4.7f,
+                    isFeatured = false,
+                    isBestSeller = true,
+                    isAvailable = true
+                ),
+
+                // 17. FAST FOOD: Pizza (Price: NOT PROVIDED, Unit: NOT PROVIDED)
+                ProductEntity(
+                    vendorId = 1,
+                    name = "Pizza",
                     category = "Fast Food",
-                    price250g = 0.0, price500g = 0.0, price1kg = 0.0, priceStandard = 199.0,
-                    description = "Hot, cheesy wood-fired style pizza and crispy veg/paneer burgers.",
-                    imageUrl = "pizza",
-                    rating = 4.6f, isFeatured = true, isBestSeller = true, isAvailable = true
+                    price = null,
+                    unit = "NOT PROVIDED",
+                    price250g = 0.0,
+                    price500g = 0.0,
+                    price1kg = 0.0,
+                    priceStandard = 0.0,
+                    description = "Premium freshly baked pizza with appetizing toppings, melted bubbly cheese and golden crust. Price not provided.",
+                    imageUrl = "img_prod_pizza_1791068937979",
+                    rating = 4.7f,
+                    isFeatured = true,
+                    isBestSeller = true,
+                    isAvailable = true
                 ),
-                // Store 2: Royal Sweets (Bokaro)
+
+                // 18. FAST FOOD: Burger (Price: NOT PROVIDED, Unit: NOT PROVIDED)
                 ProductEntity(
-                    vendorId = 2,
-                    name = "Royal Dry Fruit Halwa",
-                    category = "Sweets",
-                    price250g = 220.0, price500g = 420.0, price1kg = 800.0, priceStandard = 220.0,
-                    description = "Chewy, rich Karachi halwa loaded with almonds, cashews, and pistachios.",
-                    imageUrl = "sweets",
-                    rating = 4.8f, isFeatured = true, isBestSeller = true, isAvailable = true
-                ),
-                // Store 3: Sweet Bengal (Kolkata)
-                ProductEntity(
-                    vendorId = 3,
-                    name = "Spongy Bengali Rasgulla",
-                    category = "Bengali Sweets",
-                    price250g = 150.0, price500g = 290.0, price1kg = 560.0, priceStandard = 150.0,
-                    description = "Authentic melt-in-mouth Kolkata rasgullas crafted from fresh cow milk chhena.",
-                    imageUrl = "sweets",
-                    rating = 4.9f, isFeatured = true, isBestSeller = true, isAvailable = true
-                ),
-                // Store 4: Desi Ghee Bakes (Dhanbad)
-                ProductEntity(
-                    vendorId = 4,
-                    name = "Pure Desi Ghee Motichoor",
-                    category = "Laddu",
-                    price250g = 160.0, price500g = 300.0, price1kg = 580.0, priceStandard = 160.0,
-                    description = "Fine tiny pearls drenched in pure desi ghee and saffron syrup.",
-                    imageUrl = "sweets",
-                    rating = 4.7f, isFeatured = true, isBestSeller = false, isAvailable = true
+                    vendorId = 1,
+                    name = "Burger",
+                    category = "Fast Food",
+                    price = null,
+                    unit = "NOT PROVIDED",
+                    price250g = 0.0,
+                    price500g = 0.0,
+                    price1kg = 0.0,
+                    priceStandard = 0.0,
+                    description = "Premium juicy burger with toasted bun, seasoned patty, cheese slice and crisp veggies. Price not provided.",
+                    imageUrl = "img_prod_burger_1791068950542",
+                    rating = 4.7f,
+                    isFeatured = false,
+                    isBestSeller = true,
+                    isAvailable = true
                 )
             )
 
             for (p in initialProducts) {
-                productDao.insertProduct(p)
+                val existing = productDao.getProductByName(p.name)
+                if (existing == null) {
+                    productDao.insertProduct(p)
+                } else {
+                    productDao.updateProduct(
+                        p.copy(
+                            id = existing.id,
+                            createdAt = existing.createdAt,
+                            updatedAt = System.currentTimeMillis()
+                        )
+                    )
+                }
             }
 
             // Coupons

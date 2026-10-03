@@ -6,16 +6,18 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "products")
 data class ProductEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val vendorId: Long = 1, // Associated Business / Store ID
+    val vendorId: Long = 1, // Associated Business / Store ID (storeId)
     val name: String,
     val category: String,
     val subcategory: String = "",
+    val price: Double? = null, // Stored as price per unit/kg, null if NOT PROVIDED
+    val unit: String = "kg",   // "kg" or "NOT PROVIDED"
     val price250g: Double = 0.0,
     val price500g: Double = 0.0,
     val price1kg: Double = 0.0,
     val priceStandard: Double = 0.0,
     val discountPrice: Double = 0.0,
-    val description: String,
+    val description: String = "",
     val imageUrl: String = "",
     val stock: Int = 100,
     val sku: String = "KHU-PROD-001",
@@ -25,8 +27,17 @@ data class ProductEntity(
     val isBestSeller: Boolean = false,
     val isApproved: Boolean = true,
     val isEnabled: Boolean = true,
-    val isAvailable: Boolean = true
-)
+    val isAvailable: Boolean = true,
+    val createdAt: Long = System.currentTimeMillis(),
+    val updatedAt: Long = System.currentTimeMillis()
+) {
+    val hasValidPrice: Boolean
+        get() = price != null && price > 0.0
+
+    fun calculateWeightPrice(multiplier: Double): Double {
+        return if (hasValidPrice) (price!! * multiplier) else 0.0
+    }
+}
 
 @Entity(tableName = "cart_items")
 data class CartItemEntity(

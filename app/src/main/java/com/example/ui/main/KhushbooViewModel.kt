@@ -338,7 +338,11 @@ class KhushbooViewModel(application: Application) : AndroidViewModel(application
     // CART & MULTI-STORE ORDERING RULES
     // ==========================================
 
-    fun addToCart(product: ProductEntity, variant: String, price: Double) {
+    fun addToCart(product: ProductEntity, variant: String, price: Double, quantity: Int = 1) {
+        if (price <= 0.0 || !product.hasValidPrice) {
+            // Products without a supplied price cannot be checked out
+            return
+        }
         val store = getStoreForProduct(product)
         val storeName = store?.name ?: "Khushboo Food Outlet"
 
@@ -364,7 +368,7 @@ class KhushbooViewModel(application: Application) : AndroidViewModel(application
                     productName = product.name,
                     variant = variant,
                     price = price,
-                    quantity = 1,
+                    quantity = quantity.coerceAtLeast(1),
                     imageUrl = product.imageUrl
                 )
             )
@@ -433,6 +437,13 @@ class KhushbooViewModel(application: Application) : AndroidViewModel(application
         val items = cartItems.value
         if (items.isEmpty()) {
             return CartValidationResult(false, "Your cart is empty.")
+        }
+        val hasUnpricedItems = items.any { it.price <= 0.0 }
+        if (hasUnpricedItems) {
+            return CartValidationResult(
+                isValid = false,
+                errorMessage = "Items with unavailable pricing cannot be ordered. Please remove them before checkout."
+            )
         }
         val p = profile.value
         if (p == null || !p.isVerified) {

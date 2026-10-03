@@ -24,6 +24,12 @@ interface ProductDao {
     @Query("SELECT * FROM products WHERE id = :id")
     suspend fun getProductById(id: Long): ProductEntity?
 
+    @Query("SELECT * FROM products WHERE name = :name LIMIT 1")
+    suspend fun getProductByName(name: String): ProductEntity?
+
+    @Query("DELETE FROM products WHERE name NOT IN (:validNames)")
+    suspend fun deleteProductsNotIn(validNames: List<String>)
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertProduct(product: ProductEntity): Long
 

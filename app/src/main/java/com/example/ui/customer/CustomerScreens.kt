@@ -677,7 +677,7 @@ fun CustomerHomeScreen(viewModel: KhushbooViewModel, products: List<ProductEntit
                     color = TEXT_PRIMARY,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
                 )
-                val categories = listOf("All", "Sweets", "Bengali Sweets", "Barfi", "Laddu", "Rasgulla", "Cakes & Pastries", "Beverages", "Fast Food")
+                val categories = listOf("All", "Indian Sweets", "Drinks", "Chaat / Snacks", "Cakes & Pastries", "Fast Food")
                 LazyRow(
                     contentPadding = PaddingValues(horizontal = 16.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -727,7 +727,10 @@ fun CustomerHomeScreen(viewModel: KhushbooViewModel, products: List<ProductEntit
 
         item {
             val filteredProducts = if (searchQuery.isBlank()) {
-                products
+                if (selectedCategory == "All") products else products.filter {
+                    it.category.equals(selectedCategory, ignoreCase = true) ||
+                            (selectedCategory == "Indian Sweets" && it.category.contains("Sweets", ignoreCase = true))
+                }
             } else {
                 products.filter { it.name.contains(searchQuery, ignoreCase = true) || it.category.contains(searchQuery, ignoreCase = true) }
             }
@@ -748,9 +751,13 @@ fun CustomerHomeScreen(viewModel: KhushbooViewModel, products: List<ProductEntit
                         isAvailable = isAvailable,
                         onClick = { viewModel.selectProduct(product.id) },
                         onAddToCart = {
-                            val price = if (product.priceStandard > 0) product.priceStandard else product.price250g
-                            val variant = if (product.priceStandard > 0) "Standard" else "250g"
-                            viewModel.addToCart(product, variant, price)
+                            if (product.hasValidPrice) {
+                                val price = product.price!!
+                                val variant = if (product.unit.isNotBlank() && !product.unit.equals("NOT PROVIDED", ignoreCase = true)) "1 ${product.unit}" else "Standard"
+                                viewModel.addToCart(product, variant, price, 1)
+                            } else {
+                                viewModel.selectProduct(product.id)
+                            }
                         }
                     )
                 }
@@ -1016,15 +1023,27 @@ fun ProductCard(
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            val displayPrice = if (product.priceStandard > 0) product.priceStandard else product.price250g
-            val variantLabel = if (product.priceStandard > 0) "" else " (250g)"
-
-            Text(
-                text = "₹$displayPrice$variantLabel",
-                fontWeight = FontWeight.Bold,
-                color = BRIGHT_GOLD,
-                fontSize = 14.sp
-            )
+            if (product.hasValidPrice) {
+                val formattedPrice = if (product.price!! % 1.0 == 0.0) {
+                    product.price.toInt().toString()
+                } else {
+                    String.format(java.util.Locale.getDefault(), "%.1f", product.price)
+                }
+                val unitSuffix = if (product.unit.isNotBlank() && !product.unit.equals("NOT PROVIDED", ignoreCase = true)) "/${product.unit}" else ""
+                Text(
+                    text = "₹$formattedPrice$unitSuffix",
+                    fontWeight = FontWeight.Bold,
+                    color = BRIGHT_GOLD,
+                    fontSize = 14.sp
+                )
+            } else {
+                Text(
+                    text = "Price unavailable",
+                    fontWeight = FontWeight.Medium,
+                    color = TEXT_MUTED,
+                    fontSize = 12.5.sp
+                )
+            }
 
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -1037,7 +1056,7 @@ fun ProductCard(
                 shape = RoundedCornerShape(6.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = PRIMARY_GOLD, contentColor = DarkText)
             ) {
-                Text("Add to Cart", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = DarkText)
+                Text("+ Add", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = DarkText)
             }
         }
     }
@@ -1048,7 +1067,10 @@ fun ProductCard(
 // ==========================================
 @Composable
 fun CustomerListingScreen(viewModel: KhushbooViewModel, products: List<ProductEntity>, selectedCategory: String) {
-    val filtered = if (selectedCategory == "All") products else products.filter { it.category.equals(selectedCategory, ignoreCase = true) }
+    val filtered = if (selectedCategory == "All") products else products.filter {
+        it.category.equals(selectedCategory, ignoreCase = true) ||
+                (selectedCategory == "Indian Sweets" && it.category.contains("Sweets", ignoreCase = true))
+    }
 
     Column(modifier = Modifier.fillMaxSize().background(APP_BACKGROUND).padding(16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -1082,9 +1104,13 @@ fun CustomerListingScreen(viewModel: KhushbooViewModel, products: List<ProductEn
                         isAvailable = isAvailable,
                         onClick = { viewModel.selectProduct(product.id) },
                         onAddToCart = {
-                            val price = if (product.priceStandard > 0) product.priceStandard else product.price250g
-                            val variant = if (product.priceStandard > 0) "Standard" else "250g"
-                            viewModel.addToCart(product, variant, price)
+                            if (product.hasValidPrice) {
+                                val price = product.price!!
+                                val variant = if (product.unit.isNotBlank() && !product.unit.equals("NOT PROVIDED", ignoreCase = true)) "1 ${product.unit}" else "Standard"
+                                viewModel.addToCart(product, variant, price, 1)
+                            } else {
+                                viewModel.selectProduct(product.id)
+                            }
                         }
                     )
                 }
@@ -1126,7 +1152,7 @@ fun CustomerSearchScreen(viewModel: KhushbooViewModel, products: List<ProductEnt
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        val categories = listOf("All", "Sweets", "Barfi", "Laddu", "Bengali Sweets", "Fast Food", "Beverages")
+        val categories = listOf("All", "Indian Sweets", "Drinks", "Chaat / Snacks", "Cakes & Pastries", "Fast Food")
         LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             items(categories) { cat ->
                 val isSel = (selectedCat == cat)
@@ -1153,7 +1179,7 @@ fun CustomerSearchScreen(viewModel: KhushbooViewModel, products: List<ProductEnt
         Spacer(modifier = Modifier.height(16.dp))
 
         val results = products.filter {
-            (selectedCat == "All" || it.category.equals(selectedCat, ignoreCase = true)) &&
+            (selectedCat == "All" || it.category.equals(selectedCat, ignoreCase = true) || (selectedCat == "Indian Sweets" && it.category.contains("Sweets", ignoreCase = true))) &&
                     (query.isBlank() || it.name.contains(query, ignoreCase = true) || it.category.contains(query, ignoreCase = true))
         }
 
@@ -1179,9 +1205,13 @@ fun CustomerSearchScreen(viewModel: KhushbooViewModel, products: List<ProductEnt
                         isAvailable = isAvailable,
                         onClick = { viewModel.selectProduct(product.id) },
                         onAddToCart = {
-                            val price = if (product.priceStandard > 0) product.priceStandard else product.price250g
-                            val variant = if (product.priceStandard > 0) "Standard" else "250g"
-                            viewModel.addToCart(product, variant, price)
+                            if (product.hasValidPrice) {
+                                val price = product.price!!
+                                val variant = if (product.unit.isNotBlank() && !product.unit.equals("NOT PROVIDED", ignoreCase = true)) "1 ${product.unit}" else "Standard"
+                                viewModel.addToCart(product, variant, price, 1)
+                            } else {
+                                viewModel.selectProduct(product.id)
+                            }
                         }
                     )
                 }
@@ -1199,10 +1229,16 @@ fun CustomerProductDetailScreen(viewModel: KhushbooViewModel, product: ProductEn
     val isAvailable = viewModel.isProductAvailableAtLocation(product)
     val distanceKm = viewModel.getStoreDistanceKm(product.vendorId)
 
-    var selectedVariant by remember { mutableStateOf(if (product.priceStandard > 0) "Standard" else "250g") }
-    var currentPrice by remember {
-        mutableStateOf(if (product.priceStandard > 0) product.priceStandard else product.price250g)
-    }
+    val isWeightBased = product.unit.equals("kg", ignoreCase = true)
+    val hasPrice = product.hasValidPrice
+
+    var selectedWeightLabel by remember(product.id) { mutableStateOf("1 kg") }
+    var selectedMultiplier by remember(product.id) { mutableDoubleStateOf(1.0) }
+    var quantity by remember(product.id) { mutableIntStateOf(1) }
+
+    // Dynamic price calculation
+    val dynamicUnitPrice = if (hasPrice) (product.price!! * selectedMultiplier) else 0.0
+    val dynamicTotalPrice = dynamicUnitPrice * quantity
 
     Column(
         modifier = Modifier
@@ -1237,7 +1273,7 @@ fun CustomerProductDetailScreen(viewModel: KhushbooViewModel, product: ProductEn
                 contentDescription = product.name,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(220.dp)
+                    .height(230.dp)
                     .clip(RoundedCornerShape(16.dp)),
                 contentScale = ContentScale.Crop
             )
@@ -1278,26 +1314,59 @@ fun CustomerProductDetailScreen(viewModel: KhushbooViewModel, product: ProductEn
 
         Spacer(modifier = Modifier.height(14.dp))
         Text(product.name, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = TEXT_PRIMARY)
-        Text("Category: ${product.category}", color = TEXT_SECONDARY)
+        Text("Category: ${product.category}", color = TEXT_SECONDARY, fontSize = 13.sp)
+        
         Spacer(modifier = Modifier.height(6.dp))
-        Text("₹$currentPrice", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = BRIGHT_GOLD)
-        Spacer(modifier = Modifier.height(10.dp))
+        
+        // Price & Unit Display
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (hasPrice) {
+                val formattedBasePrice = if (product.price!! % 1.0 == 0.0) product.price.toInt().toString() else product.price.toString()
+                Text("₹$formattedBasePrice", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.ExtraBold, color = BRIGHT_GOLD)
+                Text("/${product.unit}", style = MaterialTheme.typography.titleMedium, color = TEXT_SECONDARY, modifier = Modifier.padding(start = 4.dp))
+            } else {
+                Text("Price unavailable", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = TEXT_MUTED)
+                Text(" • Unit: ${product.unit}", color = TEXT_MUTED, fontSize = 13.sp, modifier = Modifier.padding(start = 6.dp))
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
         Text(product.description, style = MaterialTheme.typography.bodyMedium, color = TEXT_PRIMARY, lineHeight = 20.sp)
         Spacer(modifier = Modifier.height(16.dp))
 
-        if (product.priceStandard == 0.0) {
-            Text("Select Variant / Weight", fontWeight = FontWeight.Bold, color = TEXT_PRIMARY)
+        // Weight Selector for products sold by weight
+        if (hasPrice && isWeightBased) {
+            Text("Select Weight Option", fontWeight = FontWeight.Bold, color = TEXT_PRIMARY, fontSize = 14.sp)
+            Text("Amount calculated dynamically based on ₹${product.price!!.toInt()}/kg", fontSize = 11.5.sp, color = TEXT_SECONDARY)
             Spacer(modifier = Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf("250g" to product.price250g, "500g" to product.price500g, "1kg" to product.price1kg).forEach { (variant, price) ->
-                    val isSel = selectedVariant == variant
+
+            val weightOptions = listOf(
+                "250 g" to 0.25,
+                "500 g" to 0.5,
+                "1 kg" to 1.0,
+                "2 kg" to 2.0
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                weightOptions.forEach { (label, mult) ->
+                    val isSel = selectedWeightLabel == label
+                    val calculatedWeightAmount = product.calculateWeightPrice(mult)
+                    val formattedAmount = if (calculatedWeightAmount % 1.0 == 0.0) calculatedWeightAmount.toInt().toString() else String.format(java.util.Locale.getDefault(), "%.1f", calculatedWeightAmount)
                     FilterChip(
                         selected = isSel,
                         onClick = {
-                            selectedVariant = variant
-                            currentPrice = price
+                            selectedWeightLabel = label
+                            selectedMultiplier = mult
                         },
-                        label = { Text("$variant (₹$price)", fontWeight = if (isSel) FontWeight.Bold else FontWeight.Normal) },
+                        label = {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(vertical = 2.dp)) {
+                                Text(label, fontWeight = if (isSel) FontWeight.Bold else FontWeight.Normal, fontSize = 12.sp)
+                                Text("₹$formattedAmount", fontSize = 10.5.sp, fontWeight = FontWeight.SemiBold, color = if (isSel) DarkText else BRIGHT_GOLD)
+                            }
+                        },
                         colors = FilterChipDefaults.filterChipColors(
                             containerColor = CARD_BACKGROUND,
                             labelColor = TEXT_PRIMARY,
@@ -1313,31 +1382,132 @@ fun CustomerProductDetailScreen(viewModel: KhushbooViewModel, product: ProductEn
                     )
                 }
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+
+        // Quantity Selector
+        if (hasPrice) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column {
+                    Text("Quantity", fontWeight = FontWeight.Bold, color = TEXT_PRIMARY)
+                    Text(if (isWeightBased) "Packets of $selectedWeightLabel" else "Units", fontSize = 11.sp, color = TEXT_SECONDARY)
+                }
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .background(CARD_BACKGROUND, RoundedCornerShape(8.dp))
+                        .border(1.dp, BORDER_GOLD, RoundedCornerShape(8.dp))
+                        .padding(horizontal = 4.dp, vertical = 2.dp)
+                ) {
+                    IconButton(
+                        onClick = { if (quantity > 1) quantity-- },
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(Icons.Default.Remove, contentDescription = "Decrease", tint = BRIGHT_GOLD)
+                    }
+                    Text(
+                        text = "$quantity",
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 15.sp,
+                        color = TEXT_PRIMARY,
+                        modifier = Modifier.padding(horizontal = 12.dp)
+                    )
+                    IconButton(
+                        onClick = { quantity++ },
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = "Increase", tint = BRIGHT_GOLD)
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Calculated Subtotal Bar
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = SECTION_BACKGROUND),
+                border = BorderStroke(1.dp, BORDER)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Total Price ($quantity × $selectedWeightLabel):", color = TEXT_PRIMARY, fontSize = 13.sp)
+                    val formattedTotal = if (dynamicTotalPrice % 1.0 == 0.0) dynamicTotalPrice.toInt().toString() else String.format(java.util.Locale.getDefault(), "%.1f", dynamicTotalPrice)
+                    Text("₹$formattedTotal", fontWeight = FontWeight.ExtraBold, fontSize = 16.sp, color = BRIGHT_GOLD)
+                }
+            }
+        } else {
+            // Price unavailable notice
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF262015)),
+                border = BorderStroke(1.dp, BRIGHT_GOLD.copy(alpha = 0.5f))
+            ) {
+                Column(modifier = Modifier.padding(14.dp)) {
+                    Text("⚠️ Pricing Notice", fontWeight = FontWeight.Bold, color = BRIGHT_GOLD, fontSize = 13.sp)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        "Price has not been provided by seller for this item. Ordering will be enabled once seller updates pricing.",
+                        color = TEXT_PRIMARY,
+                        fontSize = 12.sp,
+                        lineHeight = 18.sp
+                    )
+                }
+            }
         }
 
         Spacer(modifier = Modifier.height(24.dp))
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Button(
-                onClick = { viewModel.addToCart(product, selectedVariant, currentPrice) },
-                modifier = Modifier.weight(1f).height(48.dp),
-                shape = RoundedCornerShape(10.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = CARD_BACKGROUND, contentColor = BRIGHT_GOLD),
-                border = BorderStroke(1.dp, BRIGHT_GOLD)
-            ) {
-                Icon(Icons.Default.ShoppingCart, contentDescription = null, tint = BRIGHT_GOLD)
-                Spacer(modifier = Modifier.width(6.dp))
-                Text("Add to Cart", fontWeight = FontWeight.Bold)
+
+        if (hasPrice) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Button(
+                    onClick = {
+                        val variant = if (isWeightBased) selectedWeightLabel else "Standard"
+                        viewModel.addToCart(product, variant, dynamicUnitPrice, quantity)
+                    },
+                    modifier = Modifier.weight(1f).height(48.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = CARD_BACKGROUND, contentColor = BRIGHT_GOLD),
+                    border = BorderStroke(1.dp, BRIGHT_GOLD)
+                ) {
+                    Icon(Icons.Default.ShoppingCart, contentDescription = null, tint = BRIGHT_GOLD)
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("+ Add to Cart", fontWeight = FontWeight.Bold)
+                }
+                Button(
+                    onClick = {
+                        val variant = if (isWeightBased) selectedWeightLabel else "Standard"
+                        viewModel.addToCart(product, variant, dynamicUnitPrice, quantity)
+                        viewModel.navigateCustomerTo(CustomerScreen.CART)
+                    },
+                    modifier = Modifier.weight(1f).height(48.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = PRIMARY_GOLD, contentColor = DarkText)
+                ) {
+                    Text("Buy Now", fontWeight = FontWeight.Bold, color = DarkText)
+                }
             }
+        } else {
             Button(
-                onClick = {
-                    viewModel.addToCart(product, selectedVariant, currentPrice)
-                    viewModel.navigateCustomerTo(CustomerScreen.CART)
-                },
-                modifier = Modifier.weight(1f).height(48.dp),
+                onClick = {},
+                enabled = false,
+                modifier = Modifier.fillMaxWidth().height(48.dp),
                 shape = RoundedCornerShape(10.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = PRIMARY_GOLD, contentColor = DarkText)
+                colors = ButtonDefaults.buttonColors(
+                    disabledContainerColor = CARD_BACKGROUND,
+                    disabledContentColor = TEXT_MUTED
+                )
             ) {
-                Text("Buy Now", fontWeight = FontWeight.Bold, color = DarkText)
+                Text("Price Unavailable (Checkout Restricted)", fontWeight = FontWeight.Bold, color = TEXT_MUTED)
             }
         }
     }
@@ -2361,9 +2531,13 @@ fun CustomerWishlistScreen(viewModel: KhushbooViewModel) {
                         isAvailable = isAvailable,
                         onClick = { viewModel.selectProduct(product.id) },
                         onAddToCart = {
-                            val price = if (product.priceStandard > 0) product.priceStandard else product.price250g
-                            val variant = if (product.priceStandard > 0) "Standard" else "250g"
-                            viewModel.addToCart(product, variant, price)
+                            if (product.hasValidPrice) {
+                                val price = product.price!!
+                                val variant = if (product.unit.isNotBlank() && !product.unit.equals("NOT PROVIDED", ignoreCase = true)) "1 ${product.unit}" else "Standard"
+                                viewModel.addToCart(product, variant, price, 1)
+                            } else {
+                                viewModel.selectProduct(product.id)
+                            }
                         }
                     )
                 }
@@ -2600,12 +2774,27 @@ fun CustomerAboutScreen(viewModel: KhushbooViewModel) {
 
 // Helpers
 fun getProductImageRes(productName: String): Int {
+    val clean = productName.trim().lowercase(java.util.Locale.ROOT)
     return when {
-        productName.contains("Lassi", ignoreCase = true) -> R.drawable.img_prod_kulhad_lassi_1790683930543
-        productName.contains("Katli", ignoreCase = true) || productName.contains("Barfi", ignoreCase = true) -> R.drawable.img_prod_kaju_katli_1790683943334
-        productName.contains("Cake", ignoreCase = true) || productName.contains("Pastry", ignoreCase = true) -> R.drawable.img_prod_cake_pastry_1790683967769
-        productName.contains("Pizza", ignoreCase = true) || productName.contains("Burger", ignoreCase = true) || productName.contains("Chat", ignoreCase = true) -> R.drawable.img_prod_pizza_burger_1790683979853
-        else -> R.drawable.img_prod_gulab_jamun_1790683956047
+        clean == "special kulhad lassi" || clean.contains("lassi") -> R.drawable.img_prod_kulhad_lassi_1791068738451
+        clean == "fruit chat" || clean.contains("fruit chat") -> R.drawable.img_prod_fruit_chat_1791068751675
+        clean == "gulab jamun" -> R.drawable.img_prod_gulab_jamun_1791068764302
+        clean == "sohan papdi" -> R.drawable.img_prod_sohan_papdi_1791068775391
+        clean == "pista barfi" -> R.drawable.img_prod_pista_barfi_1791068786980
+        clean == "kaju katli" -> R.drawable.img_prod_kaju_katli_1791068799420
+        clean == "bundi laddu" -> R.drawable.img_prod_bundi_laddu_1791068813467
+        clean == "besan laddu" -> R.drawable.img_prod_besan_laddu_1791068826192
+        clean == "milk cake" -> R.drawable.img_prod_milk_cake_1791068837979
+        clean == "doda burfi" -> R.drawable.img_prod_doda_burfi_1791068849177
+        clean == "ilaichi barfi" -> R.drawable.img_prod_ilaichi_barfi_1791068860606
+        clean == "chum chum" -> R.drawable.img_prod_chum_chum_1791068873447
+        clean == "bengali rasgulla" -> R.drawable.img_prod_bengali_rasgulla_1791068887214
+        clean == "sponge rasgulla" -> R.drawable.img_prod_sponge_rasgulla_1791068901167
+        clean == "delicious cake" -> R.drawable.img_prod_delicious_cake_1791068914099
+        clean == "pastry" -> R.drawable.img_prod_pastry_1791068925551
+        clean == "pizza" -> R.drawable.img_prod_pizza_1791068937979
+        clean == "burger" -> R.drawable.img_prod_burger_1791068950542
+        else -> R.drawable.img_prod_gulab_jamun_1791068764302
     }
 }
 
