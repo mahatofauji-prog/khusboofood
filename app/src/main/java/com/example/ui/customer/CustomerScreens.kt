@@ -2,6 +2,8 @@ package com.example.ui.customer
 
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -14,6 +16,8 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -25,6 +29,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
@@ -34,6 +39,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
 import com.example.R
 import com.example.data.room.AddressEntity
 import com.example.data.room.BusinessEntity
@@ -298,6 +304,263 @@ fun CustomerMainScreen(viewModel: KhushbooViewModel) {
     }
 }
 
+data class HeroBannerItem(
+    val imageRes: Int,
+    val tag: String,
+    val title: String,
+    val subtitle: String,
+    val buttonText: String,
+    val targetCategory: String
+)
+
+val HERO_BANNERS = listOf(
+    HeroBannerItem(
+        imageRes = R.drawable.hero_signature_1791067902606,
+        tag = "KHUSHBOO SIGNATURE",
+        title = "Authentic Taste. Delivered.",
+        subtitle = "Royal feast & authentic delicacies from top local outlets",
+        buttonText = "Explore Now",
+        targetCategory = "All"
+    ),
+    HeroBannerItem(
+        imageRes = R.drawable.hero_sweets_1791067917652,
+        tag = "INDIAN SWEETS",
+        title = "Sweetness for Every Moment",
+        subtitle = "Pure Desi Ghee Kaju Katli, Gulab Jamun & Barfi",
+        buttonText = "Order Sweets",
+        targetCategory = "Sweets"
+    ),
+    HeroBannerItem(
+        imageRes = R.drawable.hero_street_food_1791067932481,
+        tag = "STREET FOOD CORNER",
+        title = "Crispy Samosas & Tangy Chaat",
+        subtitle = "Freshly made hot snacks delivered piping hot",
+        buttonText = "Explore Chaat",
+        targetCategory = "Fast Food"
+    ),
+    HeroBannerItem(
+        imageRes = R.drawable.hero_bengali_1791067952360,
+        tag = "BENGALI SPECIAL",
+        title = "Authentic Taste of Bengal",
+        subtitle = "Melt-in-mouth Nolen Gur Sandesh & Spongy Rasgulla",
+        buttonText = "View Bengali",
+        targetCategory = "Bengali Sweets"
+    ),
+    HeroBannerItem(
+        imageRes = R.drawable.hero_biryani_1791067966981,
+        tag = "BIRYANI LOVERS",
+        title = "Rich. Aromatic. Delicious.",
+        subtitle = "Clay handi dum biryani with rich saffron aroma",
+        buttonText = "Order Biryani",
+        targetCategory = "Fast Food"
+    ),
+    HeroBannerItem(
+        imageRes = R.drawable.hero_desserts_1791067982877,
+        tag = "DESSERT SPECIAL",
+        title = "Cakes, Pastries & Desserts",
+        subtitle = "Rich chocolate truffle & gourmet baked treats",
+        buttonText = "View Desserts",
+        targetCategory = "Cakes & Pastries"
+    ),
+    HeroBannerItem(
+        imageRes = R.drawable.hero_drinks_1791067995788,
+        tag = "DRINKS & REFRESHMENTS",
+        title = "Special Kulhad Lassi & Shakes",
+        subtitle = "Traditional Punjabi lassi with thick clotted malai",
+        buttonText = "Order Drinks",
+        targetCategory = "Beverages"
+    ),
+    HeroBannerItem(
+        imageRes = R.drawable.hero_local_market_1791068024182,
+        tag = "LOCAL FOOD MARKET",
+        title = "Nearby Verified Store Hubs",
+        subtitle = "Discover popular authentic kitchens in your city",
+        buttonText = "Discover Stores",
+        targetCategory = "All"
+    ),
+    HeroBannerItem(
+        imageRes = R.drawable.hero_festive_1791068038180,
+        tag = "FESTIVE FOOD SPREAD",
+        title = "Mithai & Celebration Hampers",
+        subtitle = "Pure ghee laddus and gift boxes for festivities",
+        buttonText = "Gift Sweets",
+        targetCategory = "Sweets"
+    ),
+    HeroBannerItem(
+        imageRes = R.drawable.hero_marketplace_1791068053933,
+        tag = "KHUSHBOO MARKETPLACE",
+        title = "Connecting Local Flavor with You",
+        subtitle = "Lightning-fast doorstep food delivery in 20-30 mins",
+        buttonText = "Explore Menu",
+        targetCategory = "All"
+    )
+)
+
+@Composable
+fun KhushbooHeroCarousel(
+    viewModel: KhushbooViewModel,
+    modifier: Modifier = Modifier
+) {
+    val pagerState = rememberPagerState(pageCount = { HERO_BANNERS.size })
+
+    // Auto-scroll every 4.5 seconds
+    LaunchedEffect(pagerState) {
+        while (true) {
+            delay(4500L)
+            if (!pagerState.isScrollInProgress) {
+                val nextPage = (pagerState.currentPage + 1) % HERO_BANNERS.size
+                pagerState.animateScrollToPage(
+                    page = nextPage,
+                    animationSpec = tween(durationMillis = 650, easing = FastOutSlowInEasing)
+                )
+            }
+        }
+    }
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(top = 10.dp, bottom = 4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+                .height(210.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = SECTION_BACKGROUND),
+            border = BorderStroke(1.dp, BORDER_GOLD)
+        ) {
+            Box(modifier = Modifier.fillMaxSize()) {
+                HorizontalPager(
+                    state = pagerState,
+                    modifier = Modifier.fillMaxSize()
+                ) { page ->
+                    val banner = HERO_BANNERS[page]
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        // Background Hero Image
+                        Image(
+                            painter = painterResource(id = banner.imageRes),
+                            contentDescription = banner.title,
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+
+                        // Rich Gradient Overlay for maximum readability and black+gold polish
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(
+                                    Brush.verticalGradient(
+                                        colors = listOf(
+                                            Color.Transparent,
+                                            Color(0x770B0B0B),
+                                            Color(0xEE0B0B0B)
+                                        ),
+                                        startY = 60f
+                                    )
+                                )
+                        )
+
+                        // Text & CTA Overlay
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(horizontal = 16.dp, vertical = 14.dp),
+                            verticalArrangement = Arrangement.Bottom
+                        ) {
+                            Surface(
+                                color = Color(0xCC000000),
+                                shape = RoundedCornerShape(4.dp),
+                                border = BorderStroke(0.8.dp, BRIGHT_GOLD)
+                            ) {
+                                Text(
+                                    text = banner.tag,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = BRIGHT_GOLD,
+                                    letterSpacing = 1.sp,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(4.dp))
+
+                            Text(
+                                text = banner.title,
+                                fontSize = 17.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = TEXT_PRIMARY,
+                                maxLines = 1
+                            )
+
+                            Text(
+                                text = banner.subtitle,
+                                fontSize = 11.5.sp,
+                                color = TEXT_SECONDARY,
+                                maxLines = 1
+                            )
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Button(
+                                onClick = { viewModel.selectCategory(banner.targetCategory) },
+                                shape = RoundedCornerShape(8.dp),
+                                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 4.dp),
+                                modifier = Modifier.height(34.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = PRIMARY_GOLD,
+                                    contentColor = DarkText
+                                )
+                            ) {
+                                Text(
+                                    text = banner.buttonText,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = DarkText
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Icon(
+                                    Icons.Default.ArrowForward,
+                                    contentDescription = null,
+                                    tint = DarkText,
+                                    modifier = Modifier.size(14.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // Dot Indicators
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            HERO_BANNERS.indices.forEach { index ->
+                val isSelected = pagerState.currentPage == index
+                Box(
+                    modifier = Modifier
+                        .size(if (isSelected) 8.dp else 6.dp)
+                        .background(
+                            color = if (isSelected) BRIGHT_GOLD else InactiveIconColor.copy(alpha = 0.4f),
+                            shape = CircleShape
+                        )
+                        .border(
+                            width = if (isSelected) 0.5.dp else 0.dp,
+                            color = if (isSelected) DarkText else Color.Transparent,
+                            shape = CircleShape
+                        )
+                )
+            }
+        }
+    }
+}
+
 // ==========================================
 // CUSTOMER HOME SCREEN
 // ==========================================
@@ -315,7 +578,7 @@ fun CustomerHomeScreen(viewModel: KhushbooViewModel, products: List<ProductEntit
             .background(APP_BACKGROUND),
         contentPadding = PaddingValues(bottom = 24.dp)
     ) {
-        // Active Delivery Location Bar
+        // 1. Location Header
         item {
             Surface(
                 color = SECTION_BACKGROUND,
@@ -369,9 +632,14 @@ fun CustomerHomeScreen(viewModel: KhushbooViewModel, products: List<ProductEntit
             HorizontalDivider(color = BORDER)
         }
 
-        // Search Bar Banner
+        // 2. HERO IMAGE CAROUSEL (ABOVE THE SEARCH BAR - ONLY ONE IMAGE AT A TIME)
         item {
-            Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
+            KhushbooHeroCarousel(viewModel = viewModel)
+        }
+
+        // 3. Search Bar Banner
+        item {
+            Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)) {
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
@@ -399,7 +667,7 @@ fun CustomerHomeScreen(viewModel: KhushbooViewModel, products: List<ProductEntit
             }
         }
 
-        // Category Chips
+        // 4. Explore Categories Chips
         item {
             Column(modifier = Modifier.padding(vertical = 8.dp)) {
                 Text(
@@ -438,37 +706,7 @@ fun CustomerHomeScreen(viewModel: KhushbooViewModel, products: List<ProductEntit
             }
         }
 
-        // Hero Banner Card
-        item {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(180.dp)
-                    .padding(horizontal = 16.dp, vertical = 4.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = SECTION_BACKGROUND),
-                border = BorderStroke(1.dp, BORDER_GOLD)
-            ) {
-                Box(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-                    Column(modifier = Modifier.fillMaxHeight(), verticalArrangement = Arrangement.Center) {
-                        Text("KHUSHBOO SPECIAL", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = BRIGHT_GOLD, letterSpacing = 1.sp)
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text("Special Kulhad Lassi & Kaju Katli", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = TEXT_PRIMARY)
-                        Text("Prepared with pure desi ghee & 100% fresh milk.", fontSize = 12.sp, color = TEXT_SECONDARY)
-                        Spacer(modifier = Modifier.height(10.dp))
-                        Button(
-                            onClick = { viewModel.selectCategory("Sweets") },
-                            colors = ButtonDefaults.buttonColors(containerColor = PRIMARY_GOLD, contentColor = DarkText),
-                            shape = RoundedCornerShape(8.dp)
-                        ) {
-                            Text("Order Now", fontWeight = FontWeight.Bold, color = DarkText)
-                        }
-                    }
-                }
-            }
-        }
-
-        // Popular Products List
+        // 5. Popular Delicacies Near You List
         item {
             Column(modifier = Modifier.padding(top = 16.dp)) {
                 Row(
@@ -519,7 +757,7 @@ fun CustomerHomeScreen(viewModel: KhushbooViewModel, products: List<ProductEntit
             }
         }
 
-        // Trust Features (Why Khushboo Food?)
+        // 6. Trust Features (Why Khushboo Food?)
         item {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text("Why Khushboo Food?", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = TEXT_PRIMARY)
@@ -532,7 +770,7 @@ fun CustomerHomeScreen(viewModel: KhushbooViewModel, products: List<ProductEntit
             }
         }
 
-        // Explore Nearby Stores Section (Placed directly below Why Khushboo Food?)
+        // 7. Explore Nearby Stores Section (Placed directly below Why Khushboo Food?)
         item {
             Column(modifier = Modifier.padding(vertical = 8.dp)) {
                 Row(
