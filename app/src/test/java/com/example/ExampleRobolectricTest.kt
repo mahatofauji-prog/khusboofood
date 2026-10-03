@@ -38,4 +38,16 @@ class ExampleRobolectricTest {
     val mins = LocationHelper.estimateDeliveryMinutes(3.0)
     assertTrue("ETA should be between 20 and 45 minutes", mins in 20..45)
   }
+
+  @Test
+  fun `splash background and branding colors conform to black and gold theme`() {
+    val bg = com.example.ui.splash.SPLASH_BACKGROUND
+    val gold = com.example.ui.splash.SPLASH_GOLD
+    assertEquals(8f / 255f, bg.red, 0.01f)
+    assertEquals(8f / 255f, bg.green, 0.01f)
+    assertEquals(8f / 255f, bg.blue, 0.01f)
+    assertEquals(0xF5.toFloat() / 255f, gold.red, 0.01f)
+    assertEquals(0xC5.toFloat() / 255f, gold.green, 0.01f)
+    assertEquals(0x42.toFloat() / 255f, gold.blue, 0.01f)
+  }
 }
