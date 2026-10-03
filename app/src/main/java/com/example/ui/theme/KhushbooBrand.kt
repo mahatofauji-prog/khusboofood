@@ -1,6 +1,7 @@
 package com.example.ui.theme
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
@@ -73,14 +74,22 @@ fun KhushbooBrandHeader(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
     ) {
-        Image(
-            painter = painterResource(id = R.drawable.img_uploaded_logo),
-            contentDescription = "Khushboo Food Logo",
+        Box(
             modifier = Modifier
                 .size(logoSize)
-                .clip(CircleShape),
-            contentScale = ContentScale.Crop
-        )
+                .clip(CircleShape)
+                .border(1.dp, BRIGHT_GOLD, CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.img_uploaded_logo),
+                contentDescription = "Khushboo Food Logo",
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(CircleShape),
+                contentScale = ContentScale.Crop
+            )
+        }
         Spacer(modifier = Modifier.width(8.dp))
         Column(
             verticalArrangement = Arrangement.Top
