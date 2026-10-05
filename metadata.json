@@ -1,0 +1,7 @@
+{
+  "name": "Khushboo Food",
+  "description": "A complete E-commerce Food & Sweets Platform for Khushboo Food featuring Customer, Vendor, Delivery Partner, and Super Admin apps.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
